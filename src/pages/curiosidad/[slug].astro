@@ -1,0 +1,86 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { supabase } from '../../lib/supabase.js';
+
+// Astro needs to know all possible paths at build time for static generation
+export async function getStaticPaths() {
+  const { data: curiosities, error } = await supabase
+    .from('curiosities')
+    .select('*');
+
+  if (error || !curiosities) {
+    console.error('Error fetching curiosities for static paths:', error);
+    return [];
+  }
+
+  return curiosities
+    .filter((item) => item.slug) // skip any rows without a slug defined
+    .map((item) => ({
+      params: { slug: item.slug },
+      props: { item },
+    }));
+}
+
+const { item } = Astro.props;
+
+// Build a clean meta description (trim to a reasonable length for Google)
+function truncateAtWord(text, maxLength) {
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return truncated.slice(0, lastSpace > 0 ? lastSpace : maxLength) + '...';
+}
+
+const metaDescription = truncateAtWord(item.text, 155);
+const pageTitle = `${truncateAtWord(item.text, 55)} — Curiosoteca`;
+
+// Structured data (Schema.org) so Google understands this page as an article
+// with a clear topic, source citations, and category.
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: item.text,
+  description: metaDescription,
+  articleSection: item.category,
+  ...(item.image_url && { image: item.image_url }),
+  ...(item.sources && item.sources.length > 0 && {
+    citation: item.sources.map((src) => src.url),
+  }),
+  publisher: {
+    '@type': 'Organization',
+    name: 'Curiosoteca',
+    url: 'https://curiosoteca.com',
+  },
+};
+---
+<Layout
+  title={pageTitle}
+  description={metaDescription}
+  image={item.image_url || '/og-default.jpg'}
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(structuredData)} />
+
+  <article class="detail-page">
+    <a href="/" class="back-link">&larr; Volver a todas las curiosidades</a>
+
+    {item.image_url && (
+      <img src={item.image_url} alt={item.category} class="detail-image" />
+    )}
+
+    <span class="card-category">{item.category}</span>
+    <h2 class="detail-text">{item.text}</h2>
+
+    {item.details && (
+      <p class="detail-details">{item.details}</p>
+    )}
+
+    {item.sources && Array.isArray(item.sources) && item.sources.length > 0 && (
+      <div class="detail-sources">
+        <h4>Fuentes</h4>
+        {item.sources.map((src) => (
+          <a href={src.url} target="_blank" rel="noopener noreferrer">{src.label} ↗</a>
+        ))}
+      </div>
+    )}
+  </article>
+</Layout>

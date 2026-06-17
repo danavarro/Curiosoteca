@@ -1,0 +1,123 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabase } from '../lib/supabase.js';
+
+// Fetch all curiosities at build time (this becomes static HTML)
+const { data: curiosities, error } = await supabase
+  .from('curiosities')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+if (error) {
+  console.error('Error fetching curiosities at build time:', error);
+}
+
+const items = curiosities || [];
+---
+<Layout
+  title="Curiosoteca — Descubre Curiosidades Fascinantes"
+  description="Explora un universo de curiosidades sorprendentes sobre ciencia, astronomía, animales y más."
+>
+  <section class="search-section">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Busca una curiosidad... ej: pulpo, sol, espacio"
+      autocomplete="off"
+    >
+
+    <div class="categories" id="categoryButtons">
+      <button class="category-btn active" data-category="all">Todas</button>
+      <button class="category-btn" data-category="ciencia">Ciencia</button>
+      <button class="category-btn" data-category="astronomia">Astronomía</button>
+      <button class="category-btn" data-category="animales">Animales</button>
+      <button class="category-btn" data-category="humor">Humor</button>
+    </div>
+  </section>
+
+  <section id="randomSection">
+    <button id="randomBtn">✨ Descubre algo nuevo</button>
+  </section>
+
+  <!-- This grid is rendered as real static HTML at build time -->
+  <section id="results" class="results-grid">
+    {items.length === 0 && (
+      <p class="no-results">Todavía no hay curiosidades publicadas.</p>
+    )}
+    {items.map((item) => (
+      <a href={`/curiosidad/${item.slug}`} class="card" data-category={item.category}>
+        {item.image_url && (
+          <img src={item.image_url} alt={item.category} loading="lazy" />
+        )}
+        <div class="card-body">
+          <span class="card-category">{item.category}</span>
+          <p class="card-text">{item.text}</p>
+        </div>
+      </a>
+    ))}
+  </section>
+
+  <script define:vars={{ items }}>
+    // === Client-side search & filter over the already-rendered cards ===
+    // This runs in the browser and filters the static cards by text/category,
+    // it does not re-fetch from Supabase (the data is already on the page).
+
+    const searchInput = document.getElementById('searchInput');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const resultsEl = document.getElementById('results');
+    const cards = Array.from(document.querySelectorAll('.card'));
+
+    let currentCategory = 'all';
+    let currentSearch = '';
+
+    function applyFilters() {
+      const term = currentSearch.trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const matchesCategory = currentCategory === 'all' || card.dataset.category === currentCategory;
+        const text = card.querySelector('.card-text').textContent.toLowerCase();
+        const matchesSearch = term === '' || text.includes(term);
+
+        const visible = matchesCategory && matchesSearch;
+        card.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
+      });
+
+      const existingNoResults = resultsEl.querySelector('.no-results-dynamic');
+      if (existingNoResults) existingNoResults.remove();
+
+      if (visibleCount === 0) {
+        const msg = document.createElement('p');
+        msg.className = 'no-results no-results-dynamic';
+        msg.textContent = 'No encontré nada con eso. Prueba otra búsqueda 🔍';
+        resultsEl.appendChild(msg);
+      }
+    }
+
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+      currentSearch = e.target.value;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(applyFilters, 200);
+    });
+
+    categoryButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        categoryButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCategory = btn.dataset.category;
+        applyFilters();
+      });
+    });
+
+    // === Random button: pick a random visible card and navigate to it ===
+    const randomBtn = document.getElementById('randomBtn');
+    randomBtn.addEventListener('click', () => {
+      const pool = items;
+      if (pool.length === 0) return;
+      const randomItem = pool[Math.floor(Math.random() * pool.length)];
+      window.location.href = `/curiosidad/${randomItem.slug}`;
+    });
+  </script>
+</Layout>
