@@ -74,6 +74,17 @@ export async function POST(context) {
       return context.redirect('/admin?error=' + encodeURIComponent(insertError.message));
     }
 
+    // === Trigger an automatic rebuild so the new curiosity goes live ===
+    // We don't await this in a way that blocks the redirect for too long,
+    // but we do want to know if it failed, so we log any error.
+    try {
+      await fetch(env.DEPLOY_HOOK_URL, { method: 'POST' });
+    } catch (hookError) {
+      console.error('Failed to trigger deploy hook:', hookError);
+      // Don't fail the whole request just because the rebuild trigger failed —
+      // the data is safely saved either way.
+    }
+
     return context.redirect('/admin?success=1');
 
   } catch (err) {

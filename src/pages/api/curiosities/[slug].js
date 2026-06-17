@@ -68,6 +68,13 @@ export async function POST(context) {
       return context.redirect(`/admin/editar/${originalSlug}?error=` + encodeURIComponent(updateError.message));
     }
 
+    // === Trigger an automatic rebuild so the edit goes live ===
+    try {
+      await fetch(env.DEPLOY_HOOK_URL, { method: 'POST' });
+    } catch (hookError) {
+      console.error('Failed to trigger deploy hook:', hookError);
+    }
+
     return context.redirect('/admin?success=1');
 
   } catch (err) {
