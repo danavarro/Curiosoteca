@@ -197,6 +197,8 @@ main {
   flex-direction: column;
   height: 100%;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .card:hover {
