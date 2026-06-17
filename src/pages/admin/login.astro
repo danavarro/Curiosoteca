@@ -1,0 +1,25 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// This page must run on the server since it checks/sets auth state
+export const prerender = false;
+
+const error = Astro.url.searchParams.get('error');
+---
+<Layout title="Acceso administración — Curiosoteca" description="Panel de administración">
+  <div class="admin-login-wrapper">
+    <form class="admin-login-form" method="POST" action="/api/login">
+      <h2>Acceder al panel</h2>
+
+      {error && <p class="admin-error">Email o contraseña incorrectos.</p>}
+
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" required autocomplete="email">
+
+      <label for="password">Contraseña</label>
+      <input type="password" name="password" id="password" required autocomplete="current-password">
+
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</Layout>

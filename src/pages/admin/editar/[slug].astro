@@ -1,0 +1,81 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../../../lib/supabase-server.js';
+
+export const prerender = false;
+
+const supabase = createSupabaseServerClient(Astro);
+
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) {
+  return Astro.redirect('/admin/login');
+}
+
+const { slug } = Astro.params;
+
+const { data: item, error } = await supabase
+  .from('curiosities')
+  .select('*')
+  .eq('slug', slug)
+  .single();
+
+if (error || !item) {
+  return Astro.redirect('/admin?error=' + encodeURIComponent('Curiosidad no encontrada'));
+}
+
+const sources = item.sources || [];
+const errorMsg = Astro.url.searchParams.get('error');
+---
+<Layout title={`Editar — ${item.text.slice(0, 40)}`} description="Editar curiosidad">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <h2>Editar curiosidad</h2>
+      <a href="/admin" class="admin-logout-btn">&larr; Volver al panel</a>
+    </div>
+
+    {errorMsg && <p class="admin-error">Hubo un error: {errorMsg}</p>}
+
+    <form class="admin-form" method="POST" action={`/api/curiosities/${item.slug}`} enctype="multipart/form-data">
+      <div class="admin-form-grid">
+        <div class="admin-form-col">
+          <label for="text">Texto principal</label>
+          <textarea name="text" id="text" rows="3" required>{item.text}</textarea>
+
+          <label for="category">Categoría</label>
+          <select name="category" id="category" required>
+            <option value="ciencia" selected={item.category === 'ciencia'}>Ciencia</option>
+            <option value="astronomia" selected={item.category === 'astronomia'}>Astronomía</option>
+            <option value="animales" selected={item.category === 'animales'}>Animales</option>
+            <option value="humor" selected={item.category === 'humor'}>Humor</option>
+          </select>
+
+          <label for="slug">Slug (URL)</label>
+          <input type="text" name="slug" id="slug" value={item.slug} required>
+
+          <label for="sourceLabel1">Fuente 1 — nombre</label>
+          <input type="text" name="sourceLabel1" id="sourceLabel1" value={sources[0]?.label || ''}>
+          <label for="sourceUrl1">Fuente 1 — URL</label>
+          <input type="url" name="sourceUrl1" id="sourceUrl1" value={sources[0]?.url || ''}>
+
+          <label for="sourceLabel2">Fuente 2 — nombre (opcional)</label>
+          <input type="text" name="sourceLabel2" id="sourceLabel2" value={sources[1]?.label || ''}>
+          <label for="sourceUrl2">Fuente 2 — URL (opcional)</label>
+          <input type="url" name="sourceUrl2" id="sourceUrl2" value={sources[1]?.url || ''}>
+
+          <label for="image">
+            Imagen {item.image_url ? '(ya tiene una — sube otra para reemplazarla)' : '(opcional)'}
+          </label>
+          {item.image_url && <img src={item.image_url} alt="" class="admin-current-image" />}
+          <input type="file" name="image" id="image" accept="image/*">
+        </div>
+
+        <div class="admin-form-col">
+          <label for="details">Detalles ampliados (opcional)</label>
+          <textarea name="details" id="details" class="admin-details-textarea" rows="20">{item.details || ''}</textarea>
+        </div>
+      </div>
+
+      <button type="submit">Guardar cambios</button>
+    </form>
+  </div>
+</Layout>

@@ -23,6 +23,14 @@ export async function getStaticPaths() {
 
 const { item } = Astro.props;
 
+// Fetch all slugs so the "discover something new" button can pick one randomly on the client
+const { data: allCuriosities } = await supabase
+  .from('curiosities')
+  .select('slug')
+  .not('slug', 'is', null);
+
+const allSlugs = (allCuriosities || []).map((c) => c.slug);
+
 // Build a clean meta description (trim to a reasonable length for Google)
 function truncateAtWord(text, maxLength) {
   if (text.length <= maxLength) return text;
@@ -61,7 +69,10 @@ const structuredData = {
   <script type="application/ld+json" slot="head" set:html={JSON.stringify(structuredData)} />
 
   <article class="detail-page">
-    <a href="/" class="back-link">&larr; Volver a todas las curiosidades</a>
+    <div class="detail-top-bar">
+      <a href="/" class="back-link">&larr; Volver a todas las curiosidades</a>
+      <button id="randomBtn" class="detail-random-btn-small">✨ Random</button>
+    </div>
 
     {item.image_url && (
       <img src={item.image_url} alt={item.category} class="detail-image" />
@@ -83,4 +94,16 @@ const structuredData = {
       </div>
     )}
   </article>
+
+  <script define:vars={{ allSlugs, currentSlug: item.slug }}>
+    const randomBtn = document.getElementById('randomBtn');
+    randomBtn.addEventListener('click', () => {
+      // Avoid landing on the same page again when there's more than one option
+      const candidates = allSlugs.filter((s) => s !== currentSlug);
+      const pool = candidates.length > 0 ? candidates : allSlugs;
+      if (pool.length === 0) return;
+      const randomSlug = pool[Math.floor(Math.random() * pool.length)];
+      window.location.href = `/curiosidad/${randomSlug}`;
+    });
+  </script>
 </Layout>

@@ -1,7 +1,18 @@
 {
   "name": "curiosoteca",
   "compatibility_date": "2026-06-17",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist"
+  },
+  "r2_buckets": [
+    {
+      "binding": "CURIOSITY_IMAGES",
+      "bucket_name": "curiosoteca-images",
+      "remote": true
+    }
+  ],
+  "vars": {
+    "R2_PUBLIC_URL": "https://images.curiosoteca.com"
   }
 }

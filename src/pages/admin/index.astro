@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../../lib/supabase-server.js';
+
+export const prerender = false;
+
+const supabase = createSupabaseServerClient(Astro);
+
+const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+console.log('DEBUG admin page — user:', user, 'error:', userError);
+
+if (!user) {
+  return Astro.redirect('/admin/login');
+}
+
+const success = Astro.url.searchParams.get('success');
+const errorMsg = Astro.url.searchParams.get('error');
+
+// Fetch existing curiosities to list them with edit links
+const { data: existingCuriosities } = await supabase
+  .from('curiosities')
+  .select('id, text, category, slug, image_url')
+  .order('created_at', { ascending: false });
+---
+<Layout title="Panel de administración — Curiosoteca" description="Panel de administración">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <h2>Añadir nueva curiosidad</h2>
+      <form method="POST" action="/api/logout">
+        <button type="submit" class="admin-logout-btn">Cerrar sesión</button>
+      </form>
+    </div>
+
+    {success && <p class="admin-success">Curiosidad guardada correctamente ✓</p>}
+    {errorMsg && <p class="admin-error">Hubo un error al guardar: {errorMsg}</p>}
+
+    <form class="admin-form" method="POST" action="/api/curiosities" enctype="multipart/form-data">
+      <div class="admin-form-grid">
+        <div class="admin-form-col">
+          <label for="text">Texto principal</label>
+          <textarea name="text" id="text" rows="3" required></textarea>
+
+          <label for="category">Categoría</label>
+          <select name="category" id="category" required>
+            <option value="ciencia">Ciencia</option>
+            <option value="astronomia">Astronomía</option>
+            <option value="animales">Animales</option>
+            <option value="humor">Humor</option>
+          </select>
+
+          <label for="slug">Slug (URL, sin espacios ni tildes)</label>
+          <input type="text" name="slug" id="slug" placeholder="ej: pulpos-tres-corazones" required>
+
+          <label for="sourceLabel1">Fuente 1 — nombre</label>
+          <input type="text" name="sourceLabel1" id="sourceLabel1" placeholder="ej: NASA">
+          <label for="sourceUrl1">Fuente 1 — URL</label>
+          <input type="url" name="sourceUrl1" id="sourceUrl1" placeholder="https://...">
+
+          <label for="sourceLabel2">Fuente 2 — nombre (opcional)</label>
+          <input type="text" name="sourceLabel2" id="sourceLabel2" placeholder="ej: Wikipedia">
+          <label for="sourceUrl2">Fuente 2 — URL (opcional)</label>
+          <input type="url" name="sourceUrl2" id="sourceUrl2" placeholder="https://...">
+
+          <label for="image">Imagen (opcional)</label>
+          <input type="file" name="image" id="image" accept="image/*">
+        </div>
+
+        <div class="admin-form-col">
+          <label for="details">Detalles ampliados (opcional)</label>
+          <textarea name="details" id="details" class="admin-details-textarea" rows="20"></textarea>
+        </div>
+      </div>
+
+      <button type="submit">Guardar curiosidad</button>
+    </form>
+
+    <div class="admin-list-section">
+      <h3>Curiosidades existentes</h3>
+      <div class="admin-list">
+        {existingCuriosities && existingCuriosities.map((item) => (
+          <div class="admin-list-item">
+            {item.image_url
+              ? <img src={item.image_url} alt="" class="admin-list-thumb" />
+              : <div class="admin-list-thumb admin-list-thumb-empty">sin imagen</div>
+            }
+            <div class="admin-list-info">
+              <span class="card-category">{item.category}</span>
+              <p>{item.text}</p>
+            </div>
+            <a href={`/admin/editar/${item.slug}`} class="admin-edit-btn">Editar</a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</Layout>
