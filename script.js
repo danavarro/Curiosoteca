@@ -15,15 +15,20 @@ const searchInput = document.getElementById('searchInput');
 const categoryButtons = document.querySelectorAll('.category-btn');
 const randomBtn = document.getElementById('randomBtn');
 
+// === In-memory cache of currently rendered items (for modal lookup) ===
+let currentItems = [];
+
 // === Render functions ===
 function renderResults(items) {
+  currentItems = items || [];
+
   if (!items || items.length === 0) {
     resultsEl.innerHTML = '<p class="no-results">No encontré nada con eso. Prueba otra búsqueda 🔍</p>';
     return;
   }
 
-  resultsEl.innerHTML = items.map(item => `
-    <div class="card">
+  resultsEl.innerHTML = items.map((item, index) => `
+    <div class="card" data-id="${item.id}" style="animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.5 + index * 0.06}s both;">
       ${item.image_url ? `<img src="${item.image_url}" alt="${escapeHtml(item.category)}" loading="lazy">` : ''}
       <div class="card-body">
         <span class="card-category">${escapeHtml(item.category)}</span>
@@ -31,6 +36,15 @@ function renderResults(items) {
       </div>
     </div>
   `).join('');
+
+  // Attach click listeners to open the modal
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = parseInt(card.dataset.id, 10);
+      const item = currentItems.find(i => i.id === id);
+      if (item) openModal(item);
+    });
+  });
 }
 
 function escapeHtml(str) {
@@ -41,7 +55,7 @@ function escapeHtml(str) {
 
 // === Data fetching ===
 async function fetchCuriosities() {
-  resultsEl.innerHTML = '<p class="loading">Buscando...</p>';
+  resultsEl.innerHTML = '<div class="loading-spinner"></div><p class="loading">Buscando curiosidades...</p>';
 
   let query = supabaseClient.from('curiosities').select('*').order('created_at', { ascending: false });
 
@@ -69,7 +83,7 @@ async function fetchCuriosities() {
 }
 
 async function fetchRandom() {
-  resultsEl.innerHTML = '<p class="loading">Buscando algo random...</p>';
+  resultsEl.innerHTML = '<div class="loading-spinner"></div><p class="loading">Descubriendo algo especial...</p>';
 
   // Fetch all ids first (lightweight), then pick one randomly
   let query = supabaseClient.from('curiosities').select('id');
@@ -119,6 +133,60 @@ categoryButtons.forEach(btn => {
 });
 
 randomBtn.addEventListener('click', fetchRandom);
+
+// === Modal logic ===
+const modalOverlay = document.getElementById('modalOverlay');
+const modalClose = document.getElementById('modalClose');
+const modalImage = document.getElementById('modalImage');
+const modalCategory = document.getElementById('modalCategory');
+const modalText = document.getElementById('modalText');
+const modalDetails = document.getElementById('modalDetails');
+const modalSources = document.getElementById('modalSources');
+
+function openModal(item) {
+  if (item.image_url) {
+    modalImage.src = item.image_url;
+    modalImage.style.display = 'block';
+  } else {
+    modalImage.style.display = 'none';
+  }
+
+  modalCategory.textContent = item.category;
+  modalText.textContent = item.text;
+
+  // Show extended details if available, otherwise hide that section
+  modalDetails.textContent = item.details || '';
+  modalDetails.style.display = item.details ? 'block' : 'none';
+
+  // Render sources list if available
+  if (item.sources && Array.isArray(item.sources) && item.sources.length > 0) {
+    modalSources.innerHTML = '<h4>Fuentes</h4>' + item.sources.map(src =>
+      `<a href="${src.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(src.label)} ↗</a>`
+    ).join('');
+    modalSources.style.display = 'block';
+  } else {
+    modalSources.innerHTML = '';
+    modalSources.style.display = 'none';
+  }
+
+  modalOverlay.classList.add('open');
+}
+
+function closeModal() {
+  modalOverlay.classList.remove('open');
+}
+
+modalClose.addEventListener('click', closeModal);
+
+// Close when clicking outside the modal box
+modalOverlay.addEventListener('click', (e) => {
+  if (e.target === modalOverlay) closeModal();
+});
+
+// Close with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
 
 // === Initial load ===
 fetchCuriosities();
