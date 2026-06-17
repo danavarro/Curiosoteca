@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curiosoteca — Curiosidades random</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>📚 Curiosoteca</h1>
+    <p class="subtitle">Ciencia, astronomía, humor y datos random que no sabías que necesitabas</p>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Busca algo... ej: pulpo, sol, espacio"
+        autocomplete="off"
+      >
+
+      <div class="categories" id="categoryButtons">
+        <button class="category-btn active" data-category="all">Todas</button>
+        <button class="category-btn" data-category="ciencia">Ciencia</button>
+        <button class="category-btn" data-category="astronomia">Astronomía</button>
+        <button class="category-btn" data-category="animales">Animales</button>
+        <button class="category-btn" data-category="humor">Humor</button>
+      </div>
+    </section>
+
+    <section id="randomSection">
+      <button id="randomBtn">🎲 Dato random</button>
+    </section>
+
+    <section id="results" class="results-grid">
+      <p class="loading">Cargando curiosidades...</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>curiosoteca.com — hecho con curiosidad</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
+</body>
+</html>

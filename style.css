@@ -1,0 +1,163 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #0f1115;
+  color: #f0f0f0;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 50px 20px 30px;
+  background: linear-gradient(135deg, #1a1d29 0%, #0f1115 100%);
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #a0a0b0;
+  font-size: 1rem;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.search-section {
+  margin-bottom: 30px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: 2px solid #2a2d3a;
+  background: #1a1d29;
+  color: #f0f0f0;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#searchInput:focus {
+  border-color: #6c5ce7;
+}
+
+.categories {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #2a2d3a;
+  background: #1a1d29;
+  color: #c0c0d0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.category-btn:hover {
+  border-color: #6c5ce7;
+}
+
+.category-btn.active {
+  background: #6c5ce7;
+  border-color: #6c5ce7;
+  color: white;
+}
+
+#randomSection {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+#randomBtn {
+  padding: 12px 28px;
+  font-size: 1rem;
+  border-radius: 12px;
+  border: none;
+  background: #2a2d3a;
+  color: #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#randomBtn:hover {
+  background: #6c5ce7;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: #1a1d29;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #2a2d3a;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  border-color: #6c5ce7;
+}
+
+.card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.card-category {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: #2a2d3a;
+  color: #a29bfe;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #e0e0e0;
+}
+
+.loading, .no-results {
+  text-align: center;
+  color: #707080;
+  padding: 40px;
+  grid-column: 1 / -1;
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #606070;
+  font-size: 0.85rem;
+}
