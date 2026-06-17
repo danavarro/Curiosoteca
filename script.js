@@ -22,8 +22,8 @@ function renderResults(items) {
     return;
   }
 
-  resultsEl.innerHTML = items.map(item => `
-    <div class="card">
+  resultsEl.innerHTML = items.map((item, index) => `
+    <div class="card" style="animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.5 + index * 0.06}s both;">
       ${item.image_url ? `<img src="${item.image_url}" alt="${escapeHtml(item.category)}" loading="lazy">` : ''}
       <div class="card-body">
         <span class="card-category">${escapeHtml(item.category)}</span>
@@ -41,7 +41,7 @@ function escapeHtml(str) {
 
 // === Data fetching ===
 async function fetchCuriosities() {
-  resultsEl.innerHTML = '<p class="loading">Buscando...</p>';
+  resultsEl.innerHTML = '<div class="loading-spinner"></div><p class="loading">Buscando curiosidades...</p>';
 
   let query = supabaseClient.from('curiosities').select('*').order('created_at', { ascending: false });
 
@@ -69,7 +69,7 @@ async function fetchCuriosities() {
 }
 
 async function fetchRandom() {
-  resultsEl.innerHTML = '<p class="loading">Buscando algo random...</p>';
+  resultsEl.innerHTML = '<div class="loading-spinner"></div><p class="loading">Descubriendo algo especial...</p>';
 
   // Fetch all ids first (lightweight), then pick one randomly
   let query = supabaseClient.from('curiosities').select('id');
